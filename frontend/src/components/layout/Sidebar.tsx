@@ -1,16 +1,65 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 
 const Sidebar = () => {
+  const [width, setWidth] = useState(280);
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const { user, logout, isAuthenticated } = useAuth();
+
+  const MIN_WIDTH = 150;
+  const MAX_WIDTH = 500;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+
+    const containerRect = sidebarRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+
+    const newWidth = e.clientX - containerRect.left;
+    const clampedWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
+
+    if (clampedWidth !== width) {
+      setWidth(clampedWidth);
+
+      // Dispatch custom event to notify layout of width change
+      window.dispatchEvent(new CustomEvent('sidebarResize', {
+        detail: { width: clampedWidth }
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => handleMouseMove(e);
+    const handleGlobalMouseUp = () => handleMouseUp();
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isResizing]);
 
   const handleLogout = () => {
     logout();
   };
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" ref={sidebarRef} style={{ width: `${width}px`, minWidth: `${width}px` }}>
       <div className="sidebar-content">
         <Link href="/">
           <h1 className="sidebar-logo">Evolution of Todo</h1>
@@ -42,10 +91,23 @@ const Sidebar = () => {
         </nav>
       </div>
 
+      <div
+        className="resize-handle"
+        onMouseDown={handleMouseDown}
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '6px',
+          cursor: 'col-resize',
+          zIndex: 1000,
+          background: 'rgba(255, 255, 255, 0.3)',
+        }}
+      />
+
       <style jsx>{`
         .sidebar {
-          width: 280px;
-          min-width: 280px;
           height: 100vh;
           position: fixed;
           left: 0;
@@ -56,6 +118,7 @@ const Sidebar = () => {
           display: flex;
           flex-direction: column;
           padding: 20px 0;
+          transition: width 0.1s ease;
         }
 
         .sidebar-content {
@@ -136,10 +199,30 @@ const Sidebar = () => {
           transform: translateX(5px);
         }
 
+        .resize-handle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 6px;
+          cursor: col-resize;
+          z-index: 1000;
+          background: rgba(255, 255, 255, 0.3);
+          transition: background 0.2s ease;
+        }
+
+        .resize-handle:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
         @media (max-width: 768px) {
           .sidebar {
             width: 70px;
             min-width: 70px;
+          }
+
+          .resize-handle {
+            display: none;
           }
 
           .sidebar-logo {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Head from 'next/head';
 
@@ -7,6 +7,23 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  useEffect(() => {
+    // Listen for custom event from sidebar to update main content margin
+    const handleSidebarResize = (event: CustomEvent) => {
+      const sidebarWidth = event.detail.width;
+      const mainElement = document.querySelector('main');
+      if (mainElement) {
+        mainElement.style.marginLeft = `${sidebarWidth}px`;
+      }
+    };
+
+    window.addEventListener('sidebarResize', handleSidebarResize as EventListener);
+
+    return () => {
+      window.removeEventListener('sidebarResize', handleSidebarResize as EventListener);
+    };
+  }, []);
+
   return (
     <>
       <Head>
@@ -46,7 +63,13 @@ const Layout = ({ children }: LayoutProps) => {
           max-width: 1200px;
           margin: 0 auto;
           width: 100%;
-          margin-left: 280px;
+          margin-left: 280px; /* Default width, will be overridden by JavaScript */
+        }
+
+        @media (max-width: 768px) {
+          main {
+            margin-left: 70px;
+          }
         }
 
         .container {

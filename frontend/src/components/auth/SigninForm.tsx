@@ -15,7 +15,7 @@ const SigninForm = () => {
       await login(email, password);
       router.push('/dashboard');
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      setError('Your password or email is Wrong');
       console.error('Login error:', err);
     }
   };

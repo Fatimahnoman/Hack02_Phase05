@@ -3,13 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from .api import auth_router, todo_router
-from .database.database import create_db_and_tables
+from .api.chat_router import router as chat_router
+from .api.auth_router import router as auth_router
+from .database import create_db_and_tables
 import logging
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -21,20 +30,25 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
 
-app = FastAPI(title="Evolution of Todo API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="Stateless Chat API",
+    description="API for managing chat conversations in a stateless manner",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(auth_router.router, prefix="/api/auth", tags=["auth"])
-app.include_router(todo_router.router, prefix="/api/todos", tags=["todos"])
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(chat_router, prefix="/api", tags=["chat"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
@@ -44,11 +58,19 @@ async def validation_exception_handler(request, exc):
         content={"detail": jsonable_encoder(exc.errors())},
     )
 
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    logger.error(f"General error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 @app.get("/")
 def read_root():
     logger.info("Root endpoint accessed")
-    return {"message": "Evolution of Todo API is running!"}
+    return {"message": "Stateless Chat API is running!"}
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "stateless-chat-api"}

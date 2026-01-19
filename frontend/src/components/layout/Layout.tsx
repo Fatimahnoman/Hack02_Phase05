@@ -1,29 +1,12 @@
-import React, { useEffect } from 'react';
-import Sidebar from './Sidebar';
+import React from 'react';
 import Head from 'next/head';
+import FloatingChatWidget from '../chat/FloatingChatWidget';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  useEffect(() => {
-    // Listen for custom event from sidebar to update main content margin
-    const handleSidebarResize = (event: CustomEvent) => {
-      const sidebarWidth = event.detail.width;
-      const mainElement = document.querySelector('main');
-      if (mainElement) {
-        mainElement.style.marginLeft = `${sidebarWidth}px`;
-      }
-    };
-
-    window.addEventListener('sidebarResize', handleSidebarResize as EventListener);
-
-    return () => {
-      window.removeEventListener('sidebarResize', handleSidebarResize as EventListener);
-    };
-  }, []);
-
   return (
     <>
       <Head>
@@ -32,8 +15,8 @@ const Layout = ({ children }: LayoutProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="layout">
-        <Sidebar />
         <main>{children}</main>
+        <FloatingChatWidget />
       </div>
       <style jsx global>{`
         * {
@@ -54,7 +37,7 @@ const Layout = ({ children }: LayoutProps) => {
         .layout {
           min-height: 100vh;
           display: flex;
-          flex-direction: row;
+          flex-direction: column;
         }
 
         main {
@@ -63,13 +46,6 @@ const Layout = ({ children }: LayoutProps) => {
           max-width: 1200px;
           margin: 0 auto;
           width: 100%;
-          margin-left: 280px; /* Default width, will be overridden by JavaScript */
-        }
-
-        @media (max-width: 768px) {
-          main {
-            margin-left: 70px;
-          }
         }
 
         .container {

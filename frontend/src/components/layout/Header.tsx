@@ -16,6 +16,7 @@ const Header = () => {
           {isAuthenticated && (
             <nav className="nav">
               <Link href="/dashboard">Dashboard</Link>
+              <Link href="/chat">Chat</Link>
               <span>Welcome, {user?.email}</span>
               <button onClick={handleLogout}>Logout</button>
             </nav>
@@ -52,7 +53,7 @@ const Header = () => {
         .nav button,
         .nav span {
           text-decoration: none;
-          color: #000000;
+          color: white;
           padding: 10px 16px;
           border-radius: 8px;
           background: rgba(255, 255, 255, 0.2);
@@ -62,18 +63,18 @@ const Header = () => {
           font-weight: 500;
           transition: all 0.3s ease;
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .nav a:hover,
         .nav button:hover {
-          background: rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.3);
           transform: translateY(-2px);
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .nav span {
-          background: rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.1);
           font-weight: 600;
         }
 

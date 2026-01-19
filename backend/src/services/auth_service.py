@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from ..models.user import User, UserCreate, UserRead
 from ..config import settings
-from ..database.database import get_session
+from ..database import get_session
 
 # Password hashing
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")

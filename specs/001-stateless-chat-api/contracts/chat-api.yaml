@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Stateless Chat API
+  description: API for managing chat conversations in a stateless manner
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message in a chat conversation
+      description: |
+        Creates a new conversation if no conversation_id is provided,
+        or continues an existing conversation if conversation_id is provided.
+        The API operates in a stateless manner with all state stored in the database.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user sending the message
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The user's message content
+                  example: "Hello, how can you help me?"
+                conversation_id:
+                  type: string
+                  description: Optional conversation ID to continue existing conversation
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+              required:
+                - message
+      responses:
+        '200':
+          description: Successfully processed the message and returned assistant response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversation_id:
+                    type: string
+                    description: The ID of the conversation (newly created or existing)
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  message:
+                    type: string
+                    description: The assistant's response message
+                    example: "Hello! I'm here to help you. What would you like to know?"
+                required:
+                  - conversation_id
+                  - message
+        '400':
+          description: Bad request - invalid input parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request parameters"
+        '404':
+          description: Conversation not found when an invalid conversation_id is provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Conversation not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An unexpected error occurred"
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          description: The user's message content
+        conversation_id:
+          type: string
+          description: Optional conversation ID to continue existing conversation
+      required:
+        - message
+    ChatResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          description: The ID of the conversation (newly created or existing)
+        message:
+          type: string
+          description: The assistant's response message
+      required:
+        - conversation_id
+        - message

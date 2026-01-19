@@ -4,7 +4,7 @@ from sqlmodel import Session
 from typing import Optional
 from datetime import timedelta
 from pydantic import BaseModel
-from ..database.database import get_session
+from ..database import get_session
 from ..models.user import User, UserCreate, UserRead
 from ..services.auth_service import (
     authenticate_user,
@@ -30,6 +30,9 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
         # Create new user
         db_user = create_user(session, user)
         return db_user
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is to preserve the intended behavior
+        raise
     except Exception as e:
         print(f"Registration error: {e}")
         import traceback

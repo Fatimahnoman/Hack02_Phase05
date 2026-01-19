@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "stateless-chat-api"
+version = "0.1.0"
+description = "Stateless Chat API Foundation for AI Todo Application"
+authors = ["Developer <developer@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.104.1"
+sqlmodel = "^0.0.16"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+asyncpg = "^0.0.29"
+psycopg2-binary = "^2.9.9"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+alembic = "^1.13.1"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+sqlalchemy = "^2.0.23"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+black = "^23.11.0"
+flake8 = "^6.1.0"
+mypy = "^1.7.1"
+isort = "^5.12.0"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "W503",  # line break before binary operator
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+]

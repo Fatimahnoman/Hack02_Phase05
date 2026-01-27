@@ -66,11 +66,20 @@ class AIAgentService:
             formatted_context_messages = ContextBuilder.format_messages_for_agent(conversation_history)
             formatted_messages.extend(formatted_context_messages)
 
-            # Call OpenAI API
-            client = openai.OpenAI(api_key=openai.api_key)
+            # Determine if using OpenRouter or OpenAI
+            api_base_url = os.getenv("OPENAI_API_BASE_URL")
+            if api_base_url:
+                # Use OpenRouter API
+                client = openai.OpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("OPENAI_API_BASE_URL")
+                )
+            else:
+                # Use standard OpenAI API
+                client = openai.OpenAI(api_key=openai.api_key)
 
             response = client.chat.completions.create(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                 messages=formatted_messages,
                 temperature=float(os.getenv("AGENT_TEMPERATURE", "0.7")),
                 max_tokens=int(os.getenv("MAX_RESPONSE_TOKENS", "1000")),
@@ -136,3 +145,4 @@ class AIAgentService:
 
         logger.info("AI response validation passed")
         return True
+

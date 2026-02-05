@@ -72,35 +72,35 @@ class MCPTaskToolRegistry:
     def list_tasks(self, status: Optional[str] = None, priority: Optional[str] = None) -> list:
         """List tasks with optional filtering."""
         try:
-            statement = select(Task)
-            if status:
-                statement = statement.where(Task.status == status)
-            if priority:
-                statement = statement.where(Task.priority == priority)
+            from .task_display_service import TaskDisplayService
+            display_service = TaskDisplayService(self.session)
 
-            tasks = self.session.exec(statement).all()
+            # Get tasks with display numbers
+            numbered_tasks = display_service.get_tasks_with_numbers(status)
 
             # Log the tool call
             tool_call = ToolCall(
                 function_name="list_tasks",
                 parameters={"status": status, "priority": priority},
-                result={"count": len(tasks), "tasks": [{"id": str(t.id), "title": t.title, "status": t.status} for t in tasks]},
+                result={"count": len(numbered_tasks), "tasks": [{"display_number": t["display_number"], "id": t["internal_id"], "title": t["title"], "status": t["status"]} for t in numbered_tasks]},
                 status="success"
             )
             self.session.add(tool_call)
             self.session.commit()
             self.session.flush()
 
+            # Return tasks with both internal ID and display number for the AI agent to understand
             return [
                 {
-                    "id": str(task.id),
-                    "title": task.title,
-                    "description": task.description,
-                    "status": task.status,
-                    "priority": task.priority,
-                    "created_at": task.created_at.isoformat(),
-                    "updated_at": task.updated_at.isoformat()
-                } for task in tasks
+                    "id": task["internal_id"],  # Keep internal ID for operations
+                    "display_number": task["display_number"],  # Add display number for user reference
+                    "title": task["title"],
+                    "description": task["description"],
+                    "status": task["status"],
+                    "priority": task["priority"],
+                    "created_at": task["created_at"],
+                    "updated_at": task["updated_at"]
+                } for task in numbered_tasks
             ]
         except Exception as e:
             # Log the error in tool call

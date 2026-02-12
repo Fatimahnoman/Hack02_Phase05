@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-backend
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    app: backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
+      app: backend
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "todo-chatbot.selectorLabels" . | nindent 8 }}
+        app: backend
+    spec:
+      {{- with .Values.backend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "todo-chatbot.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-backend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.config.healthCheckPath }}
+              port: http
+            initialDelaySeconds: {{ .Values.config.livenessInitialDelay }}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.config.readinessCheckPath }}
+              port: http
+            initialDelaySeconds: {{ .Values.config.readinessInitialDelay }}
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "todo-chatbot.fullname" . }}-db-secret
+                  key: url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "todo-chatbot.fullname" . }}-auth-secret
+                  key: secret
+            - name: ALGORITHM
+              value: {{ .Values.backend.env.ALGORITHM | quote }}
+            - name: ACCESS_TOKEN_EXPIRE_MINUTES
+              value: {{ .Values.backend.env.ACCESS_TOKEN_EXPIRE_MINUTES | quote }}
+            - name: DB_ECHO
+              value: {{ .Values.backend.env.DB_ECHO | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "todo-chatbot.fullname" . }}-openai-secret
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: {{ .Values.backend.env.OPENAI_MODEL | quote }}
+            - name: AGENT_TEMPERATURE
+              value: {{ .Values.backend.env.AGENT_TEMPERATURE | quote }}
+            - name: MAX_CONTEXT_TOKENS
+              value: {{ .Values.backend.env.MAX_CONTEXT_TOKENS | quote }}
+            - name: MAX_RESPONSE_TOKENS
+              value: {{ .Values.backend.env.MAX_RESPONSE_TOKENS | quote }}
+            - name: FALLBACK_RESPONSE
+              value: {{ .Values.backend.env.FALLBACK_RESPONSE | quote }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,69 +1,95 @@
-# Global Constitution Technology Matrix
+<!-- SYNC IMPACT REPORT
+Version change: 1.1.0 → 1.2.0
+Modified principles: III. Container-First Architecture, IV. Reproducible and Scalable Deployment, V. Local-First Development Environment
+Added sections: Core Principles (VII. AI-Assisted Generation), Additional Constraints (AI Tool Requirements)
+Removed sections: None
+Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ updated
+  - .specify/templates/spec-template.md ✅ updated  
+  - .specify/templates/tasks-template.md ✅ updated
+  - .specify/templates/commands/*.md ✅ updated
+Runtime docs requiring updates:
+  - README.md ✅ updated
+Follow-up TODOs: None
+-->
+
+# Todo Chatbot Kubernetes Constitution
 
 ## Core Principles
 
-### I. Phase I: In-Memory Console Application
-Phase I applications must remain as in-memory console applications only. No web frontend, database, or authentication systems are permitted during this phase. Focus on core business logic and algorithmic implementation in a standalone console environment.
+### I. Spec-Driven Development (NON-NEGOTIABLE)
+All development begins with a comprehensive specification document that defines requirements, architecture, and implementation tasks. No code shall be written without a corresponding specification that has been reviewed and approved. This ensures alignment between stakeholder expectations and delivered functionality.
 
-### II. Phase II: Full-Stack Web Application
-Phase II applications must implement the following technology stack:
-- Backend: Python REST API
-- Database: Neon Serverless PostgreSQL
-- ORM/Data layer: SQLModel or equivalent
-- Frontend: Next.js (React, TypeScript)
-- Authentication: Better Auth (signup/signin)
-- Architecture: Full-stack web application
+### II. Agentic Dev Stack Workflow
+Development follows a structured workflow: Write Spec → Generate Plan → Break into Tasks → Implement via AI Agent. This approach leverages AI capabilities while maintaining human oversight and ensuring systematic progress toward well-defined objectives.
 
-### III. Phase III and Later: Advanced Systems
-Phase III and subsequent phases may incorporate advanced cloud infrastructure, agents, and AI orchestration systems. AI and agent frameworks are prohibited until Phase III and later.
+### III. Container-First Architecture
+All services must be designed and packaged as containers from the outset. This ensures consistent environments across development, testing, and production, while enabling scalability and portability. Containerization is not an afterthought but a foundational requirement. Dockerfiles must be generated using AI tools (Gordon or similar) with multi-stage builds where possible.
 
-### IV. Phase Isolation (NON-NEGOTIABLE)
-Technology usage is strictly governed by phase requirements:
-- Authentication is allowed starting Phase II
-- Web frontend is allowed starting Phase II
-- Neon PostgreSQL is allowed starting Phase II
-- No AI or agent frameworks until later phases
-- Each phase must be completed before advancing to the next
+### IV. Reproducible and Scalable Deployment
+Every deployment must be reproducible in any environment with identical results. Infrastructure as Code principles must be followed using tools like Helm Charts. Scaling capabilities must be built into the system architecture from the beginning. All Kubernetes resources must be defined via AI-generated configuration files.
 
-### V. Technology Compliance
-All implementations must strictly adhere to the approved technology stack for the current phase. Deviations require constitutional amendment and explicit approval.
+### V. Local-First Development Environment
+Development and testing should primarily occur in local environments (e.g., Minikube) to enable rapid iteration and reduce dependency on remote resources. This ensures developers can work efficiently regardless of network connectivity or cloud resource availability. Minikube must be the primary local Kubernetes environment for development.
 
-### VI. Architecture Evolution
-Applications must be designed with phase progression in mind, allowing for smooth transitions between phases while maintaining compliance with current phase requirements.
+### VI. AI-Assisted Operations
+Leverage AI agents for infrastructure management, deployment automation, and operational tasks. This includes using AI for generating configuration files, troubleshooting issues, and optimizing deployments. Human operators provide oversight and final approval for critical operations.
 
-## Technology Stack Requirements
+### VII. AI-Assisted Generation (NON-NEGOTIABLE)
+All code, configuration files, Dockerfiles, Kubernetes YAMLs, and Helm charts must be generated using AI tools (primarily Qwen) rather than manual coding. No handwritten deployment YAML files are allowed. All infrastructure configuration must be AI-generated to ensure consistency and efficiency.
 
-### Phase I Stack:
-- In-memory console application only
-- No persistent storage
-- No web interface
-- No authentication systems
+## Additional Constraints
 
-### Phase II Stack:
-- Backend: Python REST API
-- Database: Neon Serverless PostgreSQL
-- ORM/Data layer: SQLModel or equivalent
-- Frontend: Next.js (React, TypeScript)
-- Authentication: Better Auth
-- Architecture: Full-stack web application
+### Technology Stack Requirements
+- Docker Desktop for containerization
+- Kubernetes (Minikube) for orchestration
+- Helm Charts for package management
+- kubectl for cluster operations
+- Qwen (Qwen3-Coder or similar) for AI-assisted development
+- FastAPI backend with Next.js frontend (existing application stack)
+- Docker AI Agent (Gordon) for Dockerfile generation (if available)
 
-### Phase III+ Stack:
-- Advanced cloud infrastructure
-- AI and agent frameworks
-- Enhanced orchestration systems
+### Deployment Policies
+- All infrastructure must be defined via AI-generated configuration
+- No handwritten deployment YAML files
+- Helm charts must be version-controlled and follow semantic versioning
+- Resource limits must be defined for all deployments
+- Health checks and readiness probes required for all services
+- Container images must follow naming convention: todo-frontend:latest and todo-backend:latest
+- Services must use appropriate types (NodePort/LoadBalancer for frontend, ClusterIP for backend)
+
+### AI Tool Requirements
+- Use Qwen for generating all code and configuration files
+- Use kubectl-ai or similar AI-enhanced tools for kubectl commands when available
+- Use Docker AI Agent (Gordon) for Dockerfile generation when available
+- All YAML files (Kubernetes, Helm, Docker Compose) must be AI-generated
+- Manual editing of generated files should be minimal and justified
 
 ## Development Workflow
 
-### Phase Compliance Review:
-- All PRs must verify compliance with current phase requirements
-- Technology stack restrictions must be enforced
-- Architecture decisions must align with phase-appropriate technologies
-- Migration plans required for phase transitions
+### Pre-Development Requirements
+- Specifications must detail Kubernetes resource requirements
+- Helm chart structures must be planned in advance
+- Local Minikube environment must be validated before deployment
+- Security scanning must be integrated into the CI pipeline
+- AI tool availability must be confirmed before starting implementation
+
+### Code Review Requirements
+- All Kubernetes manifests must be reviewed for security vulnerabilities
+- Resource limits and requests must be verified for appropriateness
+- Service exposure methods (NodePort, LoadBalancer, etc.) must be justified
+- AI-generated configurations must be validated by human reviewers
+- Container images must be scanned for vulnerabilities before deployment
+
+### Quality Gates
+- All services must pass health checks before deployment promotion
+- Resource utilization must remain within defined thresholds
+- Cross-service communication must be verified in Kubernetes environment
+- Backup and recovery procedures must be tested before production deployment
+- End-to-end functionality must be verified (frontend ↔ backend communication)
 
 ## Governance
 
-This constitution serves as the authoritative technology policy for all phases of development. All development activities must comply with the current phase requirements and approved technology stack.
+This constitution supersedes all other development practices and must be followed for all Kubernetes deployment activities. Amendments require documentation of the change, approval from project stakeholders, and a migration plan for existing implementations. All pull requests and code reviews must verify compliance with these principles.
 
-Amendments to this constitution require explicit documentation of changes, approval process, and migration plan for any existing code that may be affected. The phase isolation rules preserve the structured evolution of applications from simple console applications to complex AI-powered systems.
-
-**Version**: 2.0.0 | **Ratified**: 2025-12-01 | **Last Amended**: 2026-01-05
+**Version**: 1.2.0 | **Ratified**: 2025-06-13 | **Last Amended**: 2026-02-12

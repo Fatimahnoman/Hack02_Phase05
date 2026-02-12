@@ -1,0 +1,50 @@
+# Patterns to ignore when building a Helm chart (using helm package for example)
+
+# Editor swap files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+
+# Hidden files
+.*
+!.helmignore
+
+# Secrets - never include these in a chart
+secrets.yaml
+secrets.yml
+*.secret.yaml
+*.secret.yml
+
+# Local values files
+values.local.yaml
+values.dev.yaml
+values.staging.yaml
+values.prod.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Node modules if any
+node_modules/

@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./test.db}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-change-in-production}
+      - DEBUG=${DEBUG:-true}
+      - NEXT_PUBLIC_API_URL=http://backend:8000  # Internal service URL
+    volumes:
+      - ./backend:/app
+      - ./backend/.env:/app/.env  # Mount environment file
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000  # For external access
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Prevents overriding node_modules in container
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

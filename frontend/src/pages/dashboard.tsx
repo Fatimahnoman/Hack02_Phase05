@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../components/layout/Layout';
-import TodoForm from '../components/todos/TodoForm';
+import TaskForm from '../components/todos/TodoForm'; // Using updated TodoForm as TaskForm
 import TodoList from '../components/todos/TodoList';
-import MenuActionsPanel from '../components/todos/MenuActionsPanel';
-import { Todo, TodoCreate, TodoUpdate } from '../types';
+import { Todo, TodoCreate, TodoUpdate, TaskCreate } from '../types';
 import { todoAPI, taskAPI, Task } from '../services/api';
 import { useRouter } from 'next/router';
 
@@ -58,19 +56,19 @@ const DashboardPage = () => {
     fetchData();
   }, [router]);
 
-  const handleAddTodo = async (todoData: TodoCreate) => {
+  const handleAddTask = async (taskData: TaskCreate) => {
     try {
-      const response = await todoAPI.create(todoData);
-      setTodos([...todos, response.data]);
+      const response = await taskAPI.create(taskData);
+      setTasks([...tasks, response.data]);
       setViewMode(false); // Reset view mode to show the form again
       setShowAddForm(false); // Hide the form after adding
-      setSuccessMessage('Task Added Successfully in Todo List');
+      setSuccessMessage('Task Added Successfully in Task List');
       // Clear the message after 3 seconds
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
     } catch (error) {
-      console.error('Error creating todo:', error);
+      console.error('Error creating task:', error);
       // Show error message to user
       if (error instanceof Error) {
         alert(`Failed to add task: ${error.message}`);
@@ -85,7 +83,7 @@ const DashboardPage = () => {
     if (typeof id === 'string') {
       // It's a task, handle with taskAPI
       try {
-        const response = await taskAPI.toggleComplete(id);
+        const response = await taskAPI.updateStatus(id, completed);
         setTasks(tasks.map(task =>
           task.id === id ? response.data : task
         ));
@@ -227,11 +225,12 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container">
-          <p>Loading...</p>
+      <div className="dashboard-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading dashboard...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -244,59 +243,64 @@ const DashboardPage = () => {
     }
 
     return (
-      <Layout>
-        <div className="container">
-          <p>Redirecting to sign in...</p>
-        </div>
-      </Layout>
+      <div className="dashboard-container">
+        <p>Redirecting to sign in...</p>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="dashboard-container">
-        <div className="page-header">
-          <h1 className="evolution-text">Evolution of Todo</h1>
-          <h2>Task Manager</h2>
-          <p className="page-subtitle">Organize your tasks and boost your productivity</p>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <div className="header-content">
+          <h1 className="dashboard-title">Dashboard</h1>
+          <p className="dashboard-subtitle">Manage your tasks and boost productivity</p>
         </div>
+        <div className="header-actions">
+          <button 
+            className="btn-primary"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
+            {showAddForm ? 'Cancel' : '+ Add Task'}
+          </button>
+        </div>
+      </div>
 
-        <MenuActionsPanel
-          todos={[
-            ...todos.map(todo => ({
-              ...todo,
-              type: 'todo' as const,
-              originalId: todo.id
-            })),
-            ...tasks.map(task => ({
-              id: parseInt(task.id) || 0, // Convert string ID to number for compatibility
-              title: task.title,
-              description: task.description || '',
-              completed: task.status === 'completed',
-              created_at: task.created_at,
-              updated_at: task.updated_at,
-              user_id: 0, // Placeholder for compatibility
-              type: 'task' as const,
-              originalId: task.id
-            }))
-          ]}
-          onAddTodo={handleAddTodo}
-          onToggleTodo={handleToggleTodo}
-          onUpdateTodo={handleUpdateTodo}
-          onDeleteTodo={handleDeleteTodo}
-          onSetViewMode={setViewMode}
-          onSetShowAddForm={setShowAddForm}
-        />
-
-        {/* Success message display */}
-        {successMessage && (
-          <div className="success-message">
-            {successMessage}
+      {/* Stats Cards */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">📋</div>
+          <div className="stat-content">
+            <h3>{todos.length + tasks.length}</h3>
+            <p>Total Tasks</p>
           </div>
-        )}
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">✅</div>
+          <div className="stat-content">
+            <h3>{[...todos, ...tasks].filter(item => item.completed || item.status === 'done').length}</h3>
+            <p>Completed</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">⏳</div>
+          <div className="stat-content">
+            <h3>{[...todos, ...tasks].filter(item => !item.completed && item.status !== 'done').length}</h3>
+            <p>Pending</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">🎯</div>
+          <div className="stat-content">
+            <h3>{Math.round(([...todos, ...tasks].filter(item => item.completed || item.status === 'done').length / Math.max(1, [...todos, ...tasks].length)) * 100)}%</h3>
+            <p>Progress</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Conditionally render TodoForm based on showAddForm state */}
-        {showAddForm && <TodoForm onSubmit={handleAddTodo} />}
+      <div className="dashboard-content">
+        {/* Conditionally render TaskForm based on showAddForm state */}
+        {showAddForm && <TaskForm onSubmit={handleAddTask} />}
 
         <TodoList
           todos={[
@@ -309,7 +313,7 @@ const DashboardPage = () => {
               id: parseInt(task.id) || 0, // Convert string ID to number for compatibility
               title: task.title,
               description: task.description || '',
-              completed: task.status === 'completed',
+              completed: task.status === 'done',
               created_at: task.created_at,
               updated_at: task.updated_at,
               user_id: 0, // Placeholder for compatibility
@@ -320,117 +324,284 @@ const DashboardPage = () => {
           onToggle={handleToggleTodo}
           onUpdate={handleUpdateTodo}
           onDelete={handleDeleteTodo}
-          emptyState={<div className="empty-state">No tasks yet. Add one to get started!</div>}
+          emptyState={
+            <div className="empty-state">
+              <div className="empty-state-content">
+                <div className="empty-state-icon">📋</div>
+                <h3>No tasks yet</h3>
+                <p>Add a new task to get started organizing your work</p>
+                <button 
+                  className="btn-primary"
+                  onClick={() => setShowAddForm(true)}
+                >
+                  Add Your First Task
+                </button>
+              </div>
+            </div>
+          }
         />
       </div>
 
-      <style jsx global>{`
+      {/* Success message display */}
+      {successMessage && (
+        <div className="success-toast">
+          {successMessage}
+        </div>
+      )}
+
+      <style jsx>{`
         .dashboard-container {
-          max-width: 900px;
-          margin: 0 auto;
-          padding: 30px 20px;
-          background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
-          min-height: calc(100vh - 120px);
-          border-radius: 12px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+          width: 100%;
+          padding: 0;
         }
 
-        .page-header {
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-bottom: 30px;
           padding-bottom: 20px;
-          text-align: center;
-          background: white;
-          border-radius: 10px;
-          padding: 25px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+          border-bottom: 1px solid var(--card-border);
         }
 
-        .page-header h1 {
-          margin: 0 0 12px 0;
-          font-size: 2.2rem;
+        .header-content {
+          flex: 1;
+        }
+
+        .dashboard-title {
+          font-size: 28px;
           font-weight: 700;
-          color: #1a1a1a;
-          letter-spacing: -0.5px;
-        }
-
-        .page-header h2 {
-          margin: 0 0 12px 0;
-          font-size: 1.8rem;
-          font-weight: 600;
-          color: #2d3748;
-          background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+          margin: 0 0 8px 0;
+          color: var(--text-primary);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
-        .page-subtitle {
+        .dashboard-subtitle {
           margin: 0;
-          color: #4a5568;
-          font-size: 1.1rem;
-          font-weight: 500;
+          color: var(--text-secondary);
+          font-size: 16px;
         }
 
-        .evolution-text {
-          margin: 0 0 15px 0;
-          font-size: 2rem;
-          color: #2b6cb0;
-          text-decoration: underline;
-          text-decoration-color: #000;
-          text-align: center;
-          font-weight: 700;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        .header-actions {
+          display: flex;
+          gap: 12px;
         }
 
-        .success-message {
-          margin: 20px auto;
-          padding: 16px 20px;
-          background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+        .btn-primary {
+          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
           color: white;
           border: none;
-          border-radius: 10px;
+          padding: 12px 24px;
+          border-radius: var(--border-radius);
           font-weight: 600;
-          text-align: center;
-          animation: fadeInSlideDown 0.4s ease-out;
-          max-width: 500px;
-          box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        @keyframes fadeInSlideDown {
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .stat-card {
+          background: var(--card-bg);
+          border: 1px solid var(--card-border);
+          border-radius: var(--border-radius);
+          padding: 24px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon {
+          font-size: 32px;
+          width: 60px;
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(99, 102, 241, 0.1);
+          border-radius: 16px;
+        }
+
+        .stat-content h3 {
+          margin: 0 0 4px 0;
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .stat-content p {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: 15px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .dashboard-content {
+          background: var(--card-bg);
+          border: 1px solid var(--card-border);
+          border-radius: var(--border-radius);
+          padding: 25px;
+          min-height: 500px;
+        }
+
+        .empty-state {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 400px;
+          padding: 40px 20px;
+        }
+
+        .empty-state-content {
+          text-align: center;
+          max-width: 400px;
+        }
+
+        .empty-state-icon {
+          font-size: 64px;
+          margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+          margin: 0 0 12px 0;
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .empty-state p {
+          margin: 0 0 24px 0;
+          font-size: 16px;
+          color: var(--text-secondary);
+        }
+
+        .success-toast {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, var(--success), #059669);
+          color: white;
+          padding: 16px 24px;
+          border-radius: var(--border-radius);
+          box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+          z-index: 1000;
+          animation: slideInFromRight 0.4s ease;
+        }
+
+        @keyframes slideInFromRight {
           from {
+            transform: translateX(100%);
             opacity: 0;
-            transform: translateY(-20px);
           }
           to {
+            transform: translateX(0);
             opacity: 1;
-            transform: translateY(0);
           }
+        }
+
+        .loading-spinner {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 500px;
+        }
+
+        .spinner {
+          width: 50px;
+          height: 50px;
+          border: 5px solid rgba(99, 102, 241, 0.2);
+          border-top: 5px solid var(--primary-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
-          .dashboard-container {
-            padding: 20px 15px;
-            margin: 15px;
+          .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
           }
 
-          .page-header {
+          .header-content {
+            width: 100%;
+          }
+
+          .header-actions {
+            width: 100%;
+            justify-content: flex-end;
+          }
+
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+
+          .dashboard-content {
+            padding: 20px 15px;
+          }
+
+          .btn-primary {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .dashboard-header {
+            gap: 12px;
+          }
+
+          .dashboard-title {
+            font-size: 24px;
+          }
+
+          .stat-card {
             padding: 20px;
           }
 
-          .page-header h1 {
-            font-size: 1.8rem;
+          .stat-content h3 {
+            font-size: 24px;
           }
 
-          .page-header h2 {
-            font-size: 1.5rem;
+          .empty-state-content {
+            padding: 0 10px;
           }
 
-          .evolution-text {
-            font-size: 1.6rem;
+          .empty-state-icon {
+            font-size: 48px;
           }
         }
       `}</style>
-    </Layout>
+    </div>
   );
 };
 

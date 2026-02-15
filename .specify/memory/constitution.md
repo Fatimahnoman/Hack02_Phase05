@@ -1,95 +1,138 @@
 <!-- SYNC IMPACT REPORT
-Version change: 1.1.0 → 1.2.0
-Modified principles: III. Container-First Architecture, IV. Reproducible and Scalable Deployment, V. Local-First Development Environment
-Added sections: Core Principles (VII. AI-Assisted Generation), Additional Constraints (AI Tool Requirements)
-Removed sections: None
+Version change: 1.2.0 → 2.0.0
+Modified principles: All principles have been replaced with Phase V principles
+Added sections: Event-Driven Architecture, Dapr Runtime Abstraction, Scalable Microservices, Security & Portability, Performance & Observability, Advanced Features
+Removed sections: Previous container-first and AI-assisted generation principles
 Templates requiring updates:
   - .specify/templates/plan-template.md ✅ updated
-  - .specify/templates/spec-template.md ✅ updated  
+  - .specify/templates/spec-template.md ✅ updated
   - .specify/templates/tasks-template.md ✅ updated
-  - .specify/templates/commands/*.md ✅ updated
 Runtime docs requiring updates:
   - README.md ✅ updated
 Follow-up TODOs: None
 -->
 
-# Todo Chatbot Kubernetes Constitution
+# Todo Chatbot Event-Driven Microservices Constitution
 
-## Core Principles
+## Purpose & Vision
 
-### I. Spec-Driven Development (NON-NEGOTIABLE)
-All development begins with a comprehensive specification document that defines requirements, architecture, and implementation tasks. No code shall be written without a corresponding specification that has been reviewed and approved. This ensures alignment between stakeholder expectations and delivered functionality.
+This constitution defines the unbreakable architectural, technical, and philosophical foundation for Phase V.  
+The goal is to evolve the Phase IV Todo Chatbot into a **production-ready, scalable, event-driven microservices system** that demonstrates:
+- Decoupled services communicating solely via events
+- Portable infrastructure abstraction with Dapr
+- Advanced user features (recurring tasks, reminders, priorities, tags, search/filter/sort)
+- Local (Minikube) → Cloud (AKS/GKE/OKE) deployment readiness
 
-### II. Agentic Dev Stack Workflow
-Development follows a structured workflow: Write Spec → Generate Plan → Break into Tasks → Implement via AI Agent. This approach leverages AI capabilities while maintaining human oversight and ensuring systematic progress toward well-defined objectives.
+All development follows the Agentic Dev Stack:  
+Specify → Plan → Tasks → Implement (via Claude Code / AI agents).  
+No manual coding. Every line of code must trace back to a validated task.
 
-### III. Container-First Architecture
-All services must be designed and packaged as containers from the outset. This ensures consistent environments across development, testing, and production, while enabling scalability and portability. Containerization is not an afterthought but a foundational requirement. Dockerfiles must be generated using AI tools (Gordon or similar) with multi-stage builds where possible.
+**Hierarchy of Truth**  
+Constitution > Specify > Plan > Tasks > Code
 
-### IV. Reproducible and Scalable Deployment
-Every deployment must be reproducible in any environment with identical results. Infrastructure as Code principles must be followed using tools like Helm Charts. Scaling capabilities must be built into the system architecture from the beginning. All Kubernetes resources must be defined via AI-generated configuration files.
+## Core Architectural Principles (Non-Negotiable)
 
-### V. Local-First Development Environment
-Development and testing should primarily occur in local environments (e.g., Minikube) to enable rapid iteration and reduce dependency on remote resources. This ensures developers can work efficiently regardless of network connectivity or cloud resource availability. Minikube must be the primary local Kubernetes environment for development.
+### I. Event-Driven First – Loose Coupling
+All inter-service communication MUST be asynchronous via Kafka events (or Dapr Pub/Sub abstraction).  
+Direct HTTP calls between services are forbidden except via Dapr Service Invocation.
 
-### VI. AI-Assisted Operations
-Leverage AI agents for infrastructure management, deployment automation, and operational tasks. This includes using AI for generating configuration files, troubleshooting issues, and optimizing deployments. Human operators provide oversight and final approval for critical operations.
+### II. Dapr as the Runtime Abstraction Layer
+Use Dapr sidecars for ALL infrastructure interactions:
+- Pub/Sub (Kafka/Redpanda)
+- State Management (PostgreSQL/Neon)
+- Jobs API (exact-time reminders – preferred over cron bindings)
+- Secrets (Kubernetes secretstores)
+- Service Invocation (retries, discovery, mTLS)
+No direct libraries (kafka-python, psycopg2, etc.) in application code.
 
-### VII. AI-Assisted Generation (NON-NEGOTIABLE)
-All code, configuration files, Dockerfiles, Kubernetes YAMLs, and Helm charts must be generated using AI tools (primarily Qwen) rather than manual coding. No handwritten deployment YAML files are allowed. All infrastructure configuration must be AI-generated to ensure consistency and efficiency.
+### III. Scalable & Production-Grade Microservices
+Break features into independent services:
+- Chat API (producer + core logic)
+- RecurringTaskService
+- NotificationService
+- (Optional: AuditService, WebSocketService)
+Services must be horizontally scalable and restart-resilient.
 
-## Additional Constraints
+### IV. Security & Portability by Design
+All secrets (Neon creds, Redpanda creds, API keys) via Dapr Secrets or Kubernetes Secrets – never env vars or code.  
+Configuration must be YAML-driven (Dapr components) for easy swap (Kafka → RabbitMQ, Neon → other DB).
 
-### Technology Stack Requirements
-- Docker Desktop for containerization
-- Kubernetes (Minikube) for orchestration
-- Helm Charts for package management
-- kubectl for cluster operations
-- Qwen (Qwen3-Coder or similar) for AI-assisted development
-- FastAPI backend with Next.js frontend (existing application stack)
-- Docker AI Agent (Gordon) for Dockerfile generation (if available)
+### V. Performance, Reliability & Observability
+Async Python everywhere. Target <500ms task ops, exact reminder timing (±30s).  
+Built-in retries, circuit breakers (via Dapr).  
+Full audit trail via task-events topic.  
+Observability: logs, metrics, tracing enabled (Dapr defaults + kubectl).
 
-### Deployment Policies
-- All infrastructure must be defined via AI-generated configuration
-- No handwritten deployment YAML files
-- Helm charts must be version-controlled and follow semantic versioning
-- Resource limits must be defined for all deployments
-- Health checks and readiness probes required for all services
-- Container images must follow naming convention: todo-frontend:latest and todo-backend:latest
-- Services must use appropriate types (NodePort/LoadBalancer for frontend, ClusterIP for backend)
+### VI. Development Discipline
+Agentic workflow only: No freestyle coding.  
+Every code artifact references a task ID and constitution principle.  
+90%+ test coverage target for new features.  
+Local-first validation (Minikube + Redpanda Docker) before cloud.
 
-### AI Tool Requirements
-- Use Qwen for generating all code and configuration files
-- Use kubectl-ai or similar AI-enhanced tools for kubectl commands when available
-- Use Docker AI Agent (Gordon) for Dockerfile generation when available
-- All YAML files (Kubernetes, Helm, Docker Compose) must be AI-generated
-- Manual editing of generated files should be minimal and justified
+## Technology Stack Constraints (Fixed – No Deviations)
+
+- Backend: FastAPI + SQLModel (Phase IV base)
+- Database: Neon PostgreSQL (via Dapr State where possible)
+- Messaging: Kafka-compatible (Redpanda preferred – serverless cloud or Strimzi self-hosted)
+- Runtime: Dapr (full building blocks)
+- Orchestration: Kubernetes (Minikube local → AKS/GKE/OKE cloud)
+- CI/CD: GitHub Actions
+- Deployment: Helm charts (extend Phase IV)
+- Monitoring/Logging: kubectl logs + Dapr metrics (Prometheus optional)
+
+### Explicit Prohibitions
+- Polling loops for reminders/recurring (use Dapr Jobs API or event triggers)
+- Direct Kafka client libraries in app code
+- Hardcoded URLs, connection strings, or secrets
+- Monolithic blocking operations
+- Vendor lock-in (Dapr abstraction mandatory)
+
+## Key Domain Rules & Constraints
+
+- Recurring Tasks: Max 10 future instances, auto-create next on completion event
+- Reminders: Exact-time scheduling (Dapr Jobs API), remind offset configurable, in-chat delivery (stub)
+- Priorities: low/medium/high enum
+- Tags: max 5 per task, filterable/searchable
+- Search/Filter/Sort: full-text, paginated, indexed queries
+- Events: Fixed schemas (Pydantic validated) – task-events, reminders, task-updates
+- Real-time Sync: Broadcast via task-updates topic + WebSocket
+
+## Non-Functional Targets
+
+- Task CRUD latency: <500 ms
+- Reminder accuracy: within ±30 seconds
+- Event throughput: 1000+ events/min (partitioned)
+- Restart resilience: No data loss on pod restarts
+- Multi-cloud portability: Swap Kafka/DB via YAML only
 
 ## Development Workflow
 
 ### Pre-Development Requirements
-- Specifications must detail Kubernetes resource requirements
-- Helm chart structures must be planned in advance
-- Local Minikube environment must be validated before deployment
-- Security scanning must be integrated into the CI pipeline
-- AI tool availability must be confirmed before starting implementation
+- Specifications must detail event schemas and service boundaries
+- Dapr component configurations must be planned in advance
+- Local Minikube + Dapr environment must be validated before deployment
+- Event-driven architecture patterns must be verified in design
+- Dapr sidecar configurations must follow security best practices
 
 ### Code Review Requirements
-- All Kubernetes manifests must be reviewed for security vulnerabilities
-- Resource limits and requests must be verified for appropriateness
-- Service exposure methods (NodePort, LoadBalancer, etc.) must be justified
-- AI-generated configurations must be validated by human reviewers
-- Container images must be scanned for vulnerabilities before deployment
+- All services must communicate only via Dapr building blocks
+- Event schemas must be validated with Pydantic models
+- Service boundaries must align with domain responsibilities
+- Dapr component configurations must be reviewed for security
+- Microservice scalability patterns must be verified
 
 ### Quality Gates
-- All services must pass health checks before deployment promotion
-- Resource utilization must remain within defined thresholds
-- Cross-service communication must be verified in Kubernetes environment
-- Backup and recovery procedures must be tested before production deployment
-- End-to-end functionality must be verified (frontend ↔ backend communication)
+- All services must pass integration tests with Dapr sidecars
+- Event processing must maintain data consistency
+- Cross-service communication must be verified via pub/sub
+- Failure scenarios must be tested (sidecar down, network partitions)
+- End-to-end functionality must be verified across all services
 
 ## Governance
 
-This constitution supersedes all other development practices and must be followed for all Kubernetes deployment activities. Amendments require documentation of the change, approval from project stakeholders, and a migration plan for existing implementations. All pull requests and code reviews must verify compliance with these principles.
+This constitution supersedes all other development practices and must be followed for all event-driven microservices activities. Amendments require documentation of the change, approval from project stakeholders, and a migration plan for existing implementations. All pull requests and code reviews must verify compliance with these principles.
 
-**Version**: 1.2.0 | **Ratified**: 2025-06-13 | **Last Amended**: 2026-02-12
+Any deviation requires explicit update to this constitution (via speckit.plan proposal).  
+All agents MUST reference constitution principles in every decision/output.
+
+**Version**: 2.0.0 | **Ratified**: 2026-02-15 | **Last Amended**: 2026-02-15

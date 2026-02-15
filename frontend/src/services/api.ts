@@ -1,5 +1,18 @@
 import axios, { AxiosResponse } from 'axios';
-import { AuthResponse, LoginCredentials, RegisterCredentials, Todo, TodoCreate, TodoUpdate } from '../types';
+import { 
+  AuthResponse, 
+  LoginCredentials, 
+  RegisterCredentials, 
+  Todo, 
+  TodoCreate, 
+  TodoUpdate,
+  Task,
+  TaskCreate,
+  TaskUpdate,
+  Tag,
+  RecurringTaskPattern,
+  Reminder
+} from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -54,72 +67,111 @@ export const authAPI = {
   }
 };
 
-// Todo API calls
+// Todo API calls (backward compatibility)
 export const todoAPI = {
   getAll: (): Promise<AxiosResponse<Todo[]>> =>
-    api.get('/api/todos/'),
+    api.get('/api/v1/todos/'),
 
   create: (todo: TodoCreate): Promise<AxiosResponse<Todo>> =>
-    api.post('/api/todos/', todo),
+    api.post('/api/v1/todos/', todo),
 
   update: (id: number, todo: TodoUpdate): Promise<AxiosResponse<Todo>> =>
-    api.put(`/api/todos/${id}`, todo),
+    api.put(`/api/v1/todos/${id}`, todo),
 
   delete: (id: number): Promise<AxiosResponse<void>> =>
-    api.delete(`/api/todos/${id}`),
+    api.delete(`/api/v1/todos/${id}`),
 
   toggleComplete: (id: number, completed: boolean): Promise<AxiosResponse<{ id: number; completed: boolean }>> =>
-    api.patch(`/api/todos/${id}/status`, { completed }),
+    api.patch(`/api/v1/todos/${id}/status`, { completed }),
 
   getById: (id: number): Promise<AxiosResponse<Todo>> =>
-    api.get(`/api/todos/${id}`)
+    api.get(`/api/v1/todos/${id}`)
 };
 
-// Define the Task type to match the backend Task model
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  created_at: string;
-  updated_at: string;
-  completed_at: string | null;
-}
-
-export interface TaskCreate {
-  title: string;
-  description?: string;
-  status?: string;
-  priority?: string;
-}
-
-export interface TaskUpdate {
-  title?: string;
-  description?: string;
-  status?: string;
-  priority?: string;
-}
-
-// Task API calls
+// Task API calls (Phase V features)
 export const taskAPI = {
-  getAll: (): Promise<AxiosResponse<Task[]>> =>
-    api.get('/api/tasks/'),
-
-  create: (task: TaskCreate): Promise<AxiosResponse<Task>> =>
-    api.post('/api/tasks/', task),
-
-  update: (id: string, task: TaskUpdate): Promise<AxiosResponse<Task>> =>
-    api.put(`/api/tasks/${id}`, task),
-
-  delete: (id: string): Promise<AxiosResponse<void>> =>
-    api.delete(`/api/tasks/${id}`),
-
-  toggleComplete: (id: string): Promise<AxiosResponse<Task>> =>
-    api.patch(`/api/tasks/${id}/complete`),
+  // Basic task operations with new features
+  getAll: (params?: {
+    priority?: string;
+    tag?: string[];
+    due_date_from?: string;
+    due_date_to?: string;
+    without_due_date?: boolean;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<AxiosResponse<{ tasks: Task[], pagination: any }>> =>
+    api.get('/api/v1/tasks/', { params }),
 
   getById: (id: string): Promise<AxiosResponse<Task>> =>
-    api.get(`/api/tasks/${id}`)
+    api.get(`/api/v1/tasks/${id}`),
+
+  create: (task: TaskCreate): Promise<AxiosResponse<Task>> =>
+    api.post('/api/v1/tasks/', task),
+
+  update: (id: string, task: TaskUpdate): Promise<AxiosResponse<Task>> =>
+    api.put(`/api/v1/tasks/${id}`, task),
+
+  delete: (id: string): Promise<AxiosResponse<void>> =>
+    api.delete(`/api/v1/tasks/${id}`),
+
+  updateStatus: (id: string, completed: boolean): Promise<AxiosResponse<Task>> =>
+    api.patch(`/api/v1/tasks/${id}/status`, { completed }),
+
+  // Search, filter, sort
+  search: (query: string, filters?: {
+    priority?: string;
+    tag?: string[];
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<AxiosResponse<{ tasks: Task[], pagination: any, search_info: any }>> => {
+    const params: any = { q: query, ...filters };
+    return api.get('/api/v1/tasks/search', { params });
+  },
+};
+
+// Tag API functions
+export const tagAPI = {
+  getAll: (): Promise<AxiosResponse<{ tags: Tag[] }>> =>
+    api.get('/api/v1/tags'),
+
+  create: (tag: { name: string }): Promise<AxiosResponse<Tag>> =>
+    api.post('/api/v1/tags', tag),
+};
+
+// Recurring task API functions
+export const recurringTaskAPI = {
+  getAllPatterns: (): Promise<AxiosResponse<{ patterns: RecurringTaskPattern[] }>> =>
+    api.get('/api/v1/recurring-patterns'),
+
+  createPattern: (pattern: Omit<RecurringTaskPattern, 'id' | 'created_at' | 'updated_at'>): Promise<AxiosResponse<RecurringTaskPattern>> =>
+    api.post('/api/v1/recurring-patterns', pattern),
+
+  getPatternById: (id: string): Promise<AxiosResponse<RecurringTaskPattern>> =>
+    api.get(`/api/v1/recurring-patterns/${id}`),
+
+  updatePattern: (id: string, pattern: Partial<Omit<RecurringTaskPattern, 'id' | 'created_at' | 'user_id'>>): Promise<AxiosResponse<RecurringTaskPattern>> =>
+    api.put(`/api/v1/recurring-patterns/${id}`, pattern),
+
+  deletePattern: (id: string): Promise<AxiosResponse<void>> =>
+    api.delete(`/api/v1/recurring-patterns/${id}`),
+};
+
+// Reminder API functions
+export const reminderAPI = {
+  getUpcoming: (hoursAhead?: number): Promise<AxiosResponse<{ reminders: Reminder[] }>> =>
+    api.get('/api/v1/reminders/upcoming', { params: { hours_ahead: hoursAhead } }),
+
+  snooze: (id: string, minutes: number): Promise<AxiosResponse<Reminder>> =>
+    api.post(`/api/v1/reminders/${id}/snooze`, { minutes }),
+
+  dismiss: (id: string): Promise<AxiosResponse<Reminder>> =>
+    api.post(`/api/v1/reminders/${id}/dismiss`),
 };
 
 export default api;

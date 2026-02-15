@@ -17,21 +17,26 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., FastAPI, SQLModel, Dapr SDK or NEEDS CLARIFICATION]
+**Storage**: [if applicable, e.g., PostgreSQL via Dapr State, Kafka via Dapr Pub/Sub or N/A]
+**Testing**: [e.g., pytest, Dapr integration tests or NEEDS CLARIFICATION]
+**Target Platform**: [e.g., Kubernetes, Minikube, AKS/GKE/OKE or NEEDS CLARIFICATION]
+**Project Type**: [event-driven microservices - determines source structure]
+**Performance Goals**: [domain-specific, e.g., <500ms task ops, 1000+ events/min or NEEDS CLARIFICATION]
+**Constraints**: [domain-specific, e.g., ±30s reminder accuracy, event-driven architecture or NEEDS CLARIFICATION]
+**Scale/Scope**: [domain-specific, e.g., 10k users, horizontal scaling, multi-cloud or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**Event-Driven Architecture Compliance**: All inter-service communication must be asynchronous via Kafka/Dapr Pub/Sub
+**Dapr Building Blocks**: All infrastructure interactions must use Dapr sidecars (Pub/Sub, State, Secrets, Service Invocation)
+**Microservices Boundaries**: Services must be independently scalable and resilient to restarts
+**Security & Portability**: All secrets must be via Dapr/Kubernetes secrets, no hardcoded values
+**Technology Stack**: Must use FastAPI + SQLModel + Neon PostgreSQL + Redpanda/Kafka + Dapr
+**Development Discipline**: Every artifact must trace back to a validated task, no freestyle coding
 
 ## Project Structure
 
@@ -44,6 +49,7 @@ specs/[###-feature]/
 ├── data-model.md        # Phase 1 output (/sp.plan command)
 ├── quickstart.md        # Phase 1 output (/sp.plan command)
 ├── contracts/           # Phase 1 output (/sp.plan command)
+├── dapr-components/     # Dapr component definitions
 └── tasks.md             # Phase 2 output (/sp.tasks command - NOT created by /sp.plan)
 ```
 
@@ -60,39 +66,46 @@ specs/[###-feature]/
 src/
 ├── models/
 ├── services/
-├── cli/
-└── lib/
+├── dapr/
+│   └── clients/
+├── events/
+└── cli/
 
 tests/
 ├── contract/
 ├── integration/
+├── dapr-integration/
 └── unit/
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
+# [REMOVE IF UNUSED] Option 2: Event-driven microservices
+chat-api/
 ├── src/
 │   ├── models/
 │   ├── services/
-│   └── api/
-└── tests/
+│   ├── api/
+│   └── dapr/
+├── tests/
+└── dapr-component.yaml
 
-frontend/
+recurring-task-service/
 ├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+│   ├── models/
+│   ├── services/
+│   └── dapr/
+├── tests/
+└── dapr-component.yaml
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+notification-service/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── dapr/
+├── tests/
+└── dapr-component.yaml
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+directories captured above, ensuring alignment with event-driven architecture and Dapr integration]
 
 ## Complexity Tracking
 
@@ -100,5 +113,5 @@ directories captured above]
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| [e.g., direct Kafka client] | [specific requirement] | [Dapr abstraction insufficient for this case] |
+| [e.g., hardcoded secrets] | [specific constraint] | [Dapr/K8s secrets approach not viable] |

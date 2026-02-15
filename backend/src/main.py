@@ -7,6 +7,8 @@ from .api.routes.chat import router as chat_router
 from .api.auth_router import router as auth_router
 from .api.todo_router import router as todo_router
 from .api.task_router import router as task_router
+from .api.tasks_v2_router import router as tasks_v2_router  # Router for Phase V features
+from .api.recurring_router import router as recurring_router  # Router for recurring tasks
 from .core.database import init_db
 from .models import *  # Import all models to register them with SQLModel
 from .core.config import settings
@@ -59,6 +61,10 @@ app.include_router(stateless_chat_router, prefix="/api/v1", tags=["chat"])
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(todo_router, prefix="/api/todos", tags=["todos"])
 app.include_router(task_router, prefix="/api", tags=["tasks"])
+
+# Include our new Phase V feature routers
+app.include_router(tasks_v2_router, prefix="/api/v1", tags=["tasks-v2"])  # New task router with enhanced features
+app.include_router(recurring_router, prefix="/api/v1/recurring-patterns", tags=["recurring-tasks"])  # Router for recurring tasks
 
 # Include our new health check endpoints
 from .api.routes.health import router as health_router

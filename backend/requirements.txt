@@ -13,3 +13,5 @@ SQLAlchemy
 cohere
 bcrypt
 openai
+celery
+python-dateutil

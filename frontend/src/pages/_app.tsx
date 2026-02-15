@@ -1,14 +1,15 @@
 import React from 'react';
 import { AppProps } from 'next/app';
 import { AuthProvider } from '../contexts/AuthContext';
-import Layout from '../components/layout/Layout';
+import SidebarLayout from '../components/layout/SidebarLayout';
+import '../styles/animations.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
-      <Layout>
+      <SidebarLayout>
         <Component {...pageProps} />
-      </Layout>
+      </SidebarLayout>
     </AuthProvider>
   );
 }

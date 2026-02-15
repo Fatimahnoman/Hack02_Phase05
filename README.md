@@ -1,6 +1,6 @@
-# Evolution of Todo - Phase III: Conversational AI Layer using OpenAI Agents SDK
+# Evolution of Todo - Phase V: Event-Driven Microservices with Dapr
 
-This project implements a full-stack todo application with authentication and an AI-powered conversational layer as specified in Phase III of the Evolution of Todo project.
+This project implements a production-ready, scalable, event-driven microservices system as specified in Phase V of the Evolution of Todo project. The system demonstrates decoupled services communicating solely via events, portable infrastructure abstraction with Dapr, and advanced user features with local (Minikube) to cloud (AKS/GKE/OKE) deployment readiness.
 
 ## Features
 
@@ -9,22 +9,23 @@ This project implements a full-stack todo application with authentication and an
 - Mark todos as complete/incomplete
 - User-specific data isolation
 - Responsive web interface
-- **NEW**: AI-powered chat with context-aware responses
-- **NEW**: Conversation history persistence
-- **NEW**: Context reconstruction from database
-- **NEW**: Error handling and fallback responses for AI services
+- **NEW**: Event-driven architecture with loose coupling
+- **NEW**: Dapr runtime abstraction for infrastructure services
+- **NEW**: Advanced task features: recurring tasks, reminders, priorities, tags
+- **NEW**: Search, filter, and sort capabilities
+- **NEW**: Real-time synchronization via WebSocket
+- **NEW**: Horizontal scalability and cloud-native deployment
 
 ## Tech Stack
 
 ### Backend
 - Python 3.11
-- FastAPI
-- SQLModel
-- Neon Serverless PostgreSQL
+- FastAPI + SQLModel
+- Neon Serverless PostgreSQL (via Dapr State Management)
+- Dapr (Distributed Application Runtime)
+- Kafka/Redpanda (via Dapr Pub/Sub)
 - Better Auth
 - Uvicorn (ASGI server)
-- OpenAI API
-- **NEW**: OpenAI Agents SDK
 
 ### Frontend
 - Next.js 14
@@ -32,63 +33,61 @@ This project implements a full-stack todo application with authentication and an
 - TypeScript
 - Axios for API calls
 
+### Infrastructure
+- Kubernetes (Minikube local → AKS/GKE/OKE cloud)
+- Helm Charts
+- Dapr Components (Pub/Sub, State Management, Secrets)
+- GitHub Actions (CI/CD)
+
 ## Setup
 
-### Backend Setup
+### Prerequisites
 
-1. Navigate to the backend directory:
+1. Install Docker Desktop
+2. Install kubectl
+3. Install Helm
+4. Install Dapr CLI
+5. Set up Minikube
+
+### Local Development Setup
+
+1. Initialize Dapr:
    ```bash
-   cd backend
+   dapr init
    ```
 
-2. Install dependencies:
+2. Start Minikube:
    ```bash
-   pip install -r requirements.txt
+   minikube start
    ```
 
-3. Set up your environment variables in `.env` file (defaults to SQLite for local development):
-   ```
-   DATABASE_URL=sqlite:///./chat_app.db
-   SECRET_KEY=your-super-secret-key-change-this-in-production
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
-   DB_ECHO=False
-   OPENAI_API_KEY=your-openai-api-key-here
-   OPENAI_MODEL=gpt-3.5-turbo
-   AGENT_TEMPERATURE=0.7
-   MAX_CONTEXT_TOKENS=8000
-   MAX_RESPONSE_TOKENS=1000
-   FALLBACK_RESPONSE=I'm having trouble responding right now. Could you try rephrasing?
-   ```
-
-4. Run the application:
+3. Install Dapr to Kubernetes:
    ```bash
-   uvicorn src.main:app --reload --port 8000
+   dapr init -k
    ```
 
-**Note**: The application defaults to SQLite database for easy local development. For production, you can switch to PostgreSQL by changing the DATABASE_URL in your .env file.
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
+4. Deploy the application:
    ```bash
-   cd frontend
+   helm install todo-chatbot charts/todo-chatbot/
    ```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Architecture
 
-3. Create a `.env.local` file with your API URL:
-   ```
-   NEXT_PUBLIC_API_URL=http://localhost:8000
-   ```
+### Service Components
 
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
+- **Chat API**: Handles user requests and produces events
+- **RecurringTaskService**: Manages recurring task creation and scheduling
+- **NotificationService**: Handles reminders and notifications
+- **(Optional) AuditService**: Tracks all system events
+- **(Optional) WebSocketService**: Manages real-time updates
+
+### Event-Driven Patterns
+
+- All inter-service communication via Kafka events (abstracted through Dapr Pub/Sub)
+- Fixed event schemas with Pydantic validation
+- Task lifecycle events: task-created, task-updated, task-completed, task-deleted
+- Reminder events for scheduled notifications
+- Audit trail via task-events topic
 
 ## API Endpoints
 
@@ -104,36 +103,30 @@ This project implements a full-stack todo application with authentication and an
 - `DELETE /api/todos/{id}` - Delete a specific todo
 - `PATCH /api/todos/{id}/status` - Update todo completion status
 
-### Chat
-- `POST /api/{user_id}/chat` - Send a message and get AI-powered response with conversation context
-  Request body:
-  ```json
-  {
-    "message": "string (required)",
-    "conversation_id": "string (optional, UUID format)"
-  }
-  ```
-  Response:
-  ```json
-  {
-    "conversation_id": "string (UUID)",
-    "message": "string (AI-generated response)"
-  }
-  ```
+### Advanced Features
+- `POST /api/todos/recurring` - Create recurring tasks
+- `GET /api/todos/search` - Search, filter, and sort todos
+- `PATCH /api/todos/{id}/priority` - Update task priority
+- `PUT /api/todos/{id}/tags` - Add/remove tags from tasks
+
+## Dapr Components
+
+### State Store (PostgreSQL via Neon)
+Configured in `dapr-components/statestore.yaml`
+
+### Pub/Sub (Kafka/Redpanda)
+Configured in `dapr-components/pubsub.yaml`
+
+### Secret Store (Kubernetes)
+Configured in `dapr-components/secrets.yaml`
 
 ## Environment Variables
 
 ### Backend
-- `DATABASE_URL`: PostgreSQL database connection string
-- `SECRET_KEY`: Secret key for JWT tokens
-- `ALGORITHM`: JWT algorithm (default: HS256)
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time (default: 30)
-- `OPENAI_API_KEY`: OpenAI API key for AI agent integration
-- `OPENAI_MODEL`: OpenAI model to use (default: gpt-3.5-turbo)
-- `AGENT_TEMPERATURE`: Creativity parameter for AI responses (default: 0.7)
-- `MAX_CONTEXT_TOKENS`: Maximum tokens for conversation context (default: 8000)
-- `MAX_RESPONSE_TOKENS`: Maximum tokens for AI responses (default: 1000)
-- `FALLBACK_RESPONSE`: Response to use when AI service fails
+- `DAPR_HOST`: Dapr sidecar host (usually localhost)
+- `DAPR_HTTP_PORT`: Dapr sidecar HTTP port
+- `NEON_DB_CONNECTION_STRING`: Connection string retrieved via Dapr secrets
+- `REDPANDA_BROKER_LIST`: Broker list retrieved via Dapr secrets
 
 ### Frontend
 - `NEXT_PUBLIC_API_URL`: Base URL for the backend API
@@ -142,23 +135,29 @@ This project implements a full-stack todo application with authentication and an
 
 ```
 backend/
-├── src/
-│   ├── models/          # Data models
-│   │   ├── conversation.py  # Conversation data model
-│   │   ├── message.py       # Message data model
-│   │   └── ai_config.py     # AI configuration model
-│   ├── services/        # Business logic
-│   │   ├── chat_service.py       # Chat operations
-│   │   ├── conversation_service.py # Conversation management
-│   │   ├── ai_agent_service.py   # AI agent integration service
-│   │   ├── context_builder.py    # Conversation context building
-│   │   ├── ai_error_handler.py   # Error handling utilities
-│   │   └── circuit_breaker.py    # Circuit breaker pattern
-│   ├── api/             # API routes
-│   │   └── chat_router.py        # Chat API endpoints
-│   ├── database/        # Database configuration
-│   ├── config.py        # Configuration settings
-│   └── main.py          # FastAPI app entry point
+├── chat-api/            # Main API service
+│   ├── src/
+│   │   ├── models/     # Data models
+│   │   ├── services/   # Business logic
+│   │   ├── dapr/       # Dapr client utilities
+│   │   ├── events/     # Event schemas and handlers
+│   │   └── api/        # API routes
+│   ├── tests/
+│   └── dapr-component.yaml
+├── recurring-task-service/  # Recurring task management
+│   ├── src/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── dapr/
+│   ├── tests/
+│   └── dapr-component.yaml
+├── notification-service/    # Notification management
+│   ├── src/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── dapr/
+│   ├── tests/
+│   └── dapr-component.yaml
 └── requirements.txt     # Dependencies
 
 frontend/
@@ -171,61 +170,68 @@ frontend/
 ├── package.json     # Dependencies
 └── next.config.js   # Next.js configuration
 
+dapr-components/
+├── statestore.yaml      # PostgreSQL state store component
+├── pubsub.yaml          # Kafka/Redpanda pub/sub component
+└── secrets.yaml         # Kubernetes secrets component
+
+charts/
+└── todo-chatbot/        # Helm chart for deployment
+
 specs/
-└── 001-ai-agents-sdk/  # Specification documents
+└── 005-event-driven-microservices/  # Specification documents
     ├── spec.md         # Feature specification
     ├── plan.md         # Implementation plan
     ├── data-model.md   # Data model
+    ├── dapr-components/ # Dapr component definitions
     ├── contracts/      # API contracts
     └── tasks.md        # Implementation tasks
 
 history/
 └── prompts/           # Prompt History Records
-    └── 001-ai-agents-sdk/
+    └── 005-event-driven-microservices/
 ```
 
-## AI Agent Integration Features
+## Event-Driven Architecture Features
 
-### Context-Aware AI Responses
-- The AI agent receives full conversation history before generating a response
-- Responses demonstrate understanding of conversation context and history
-- Maintains coherent, multi-turn conversations
+### Loose Coupling
+- All inter-service communication is asynchronous via Dapr Pub/Sub
+- Services can scale independently
+- Failure in one service doesn't directly impact others
 
-### Persistent Conversation Context
-- Conversation context is reconstructed from database records on each request
-- Maintains stateless operation without storing conversation context in server memory
-- Functions properly after server restarts with access to previous conversation history
+### Dapr Runtime Abstraction
+- Infrastructure concerns abstracted through Dapr building blocks
+- Portable across different platforms (local, cloud)
+- Consistent patterns for state management, pub/sub, and secrets
 
-### Error Handling & Resilience
-- Graceful degradation when AI service is unavailable
-- Fallback responses maintain user experience during API failures
-- Circuit breaker pattern for API resilience
-- Comprehensive logging for debugging
+### Advanced Task Capabilities
+- Recurring tasks with configurable intervals
+- Priority levels (low/medium/high)
+- Tagging system (up to 5 tags per task)
+- Full-text search, filtering, and sorting
+- Configurable reminders with exact-time scheduling
 
-### Performance & Optimization
-- Context window management with token limit handling
-- Conversation history caching for improved performance
-- Response validation before database persistence
+### Scalability & Reliability
+- Horizontal pod autoscaling based on load
+- Built-in retries and circuit breakers via Dapr
+- Event-driven processing ensures resilience
+- Full audit trail via event logging
 
 ## Running the Application
 
-### Running Backend
-1. Set up environment variables (as described above)
-2. Navigate to the backend directory: `cd backend`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the application: `uvicorn src.main:app --reload --port 8000`
-5. The application will be available at `http://localhost:8000`
-6. API documentation available at `http://localhost:8000/docs`
+### Local Development
+1. Ensure prerequisites are installed (Docker, kubectl, Helm, Dapr)
+2. Initialize Dapr locally: `dapr init`
+3. Start Minikube: `minikube start`
+4. Install Dapr to Kubernetes: `dapr init -k`
+5. Deploy the application: `helm install todo-chatbot charts/todo-chatbot/`
+6. Access the application: `minikube service todo-chatbot-frontend`
 
-### Running Frontend
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Create `.env.local` file with API URL:
-   ```
-   NEXT_PUBLIC_API_URL=http://localhost:8000
-   ```
-4. Run the development server: `npm run dev`
-5. The frontend will be available at `http://localhost:3000`
+### Cloud Deployment
+1. Configure your cloud Kubernetes cluster (AKS/GKE/OKE)
+2. Install Dapr to your cluster: `dapr init -k`
+3. Update Helm values for cloud-specific configurations
+4. Deploy using Helm: `helm install todo-chatbot charts/todo-chatbot/`
 
 ### Registration and Login
 1. To register a new user, send a POST request to `/api/auth/register` with:
@@ -243,17 +249,19 @@ history/
    }
    ```
 
-### Testing the AI Chat Functionality
-1. Start both backend and frontend
+### Testing the Event-Driven Features
+1. Start the application with all services
 2. Register or login to get an access token
-3. Access the frontend at `http://localhost:3000`
-4. Use the chat interface to interact with the AI agent
-5. The AI will remember conversation context across multiple messages in the same conversation
+3. Create tasks and observe event processing
+4. Set up recurring tasks and reminders
+5. Monitor events flowing through the system via Dapr dashboard
 
 ## Constraints
 
-This implementation follows the Phase III+ constraints:
-- Uses approved AI/agent frameworks (OpenAI Agents SDK)
-- Maintains stateless architecture
-- Builds upon Phase II infrastructure (Python FastAPI, SQLModel, PostgreSQL)
-- Properly layered architecture following existing patterns
+This implementation follows the Phase V+ constraints:
+- Event-driven architecture with loose coupling via Dapr Pub/Sub
+- All infrastructure interactions through Dapr building blocks
+- No direct database or message queue connections in application code
+- Horizontal scalability and cloud-native deployment patterns
+- Advanced features: recurring tasks, reminders, priorities, tags, search/filter/sort
+- Performance targets: <500ms task operations, ±30s reminder accuracy

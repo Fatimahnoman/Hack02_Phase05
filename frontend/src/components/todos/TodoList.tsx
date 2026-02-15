@@ -1,12 +1,25 @@
 import React from 'react';
-import { Todo, TodoUpdate } from '../../types';
-import { Task, TaskUpdate } from '../../services/api';
+import { Todo, TodoUpdate, Task, TaskUpdate } from '../../types';
 import TodoItem from './TodoItem';
 
 // Define a unified interface for both todos and tasks
-interface UnifiedItem extends Todo {
+interface UnifiedItem {
+  id: string | number;
+  title: string;
+  description?: string;
+  completed?: boolean;
+  due_date?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
   type: 'todo' | 'task';
   originalId: string | number;
+  // Task-specific fields
+  status?: string;
+  priority?: string;
+  completed_at?: string | null;
+  reminder_offset?: number;
+  tags?: any[]; // Simplified for compatibility
 }
 
 interface TodoListProps {
@@ -42,24 +55,14 @@ const TodoList = ({ todos, onToggle, onUpdate, onDelete, emptyState }: TodoListP
         />
       ))}
 
-      {todos.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state-content">
-            <div className="empty-state-icon">📋</div>
-            <h3>No tasks yet</h3>
-            <p>Add a new task to get started organizing your work</p>
-          </div>
-        </div>
-      )}
-
       <style jsx>{`
         .todo-list {
           display: flex;
           flex-direction: column;
-          background: white;
-          border-radius: 12px;
+          background: var(--card-bg);
+          border-radius: var(--border-radius);
           padding: 25px;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid var(--card-border);
           margin-top: 20px;
         }
 
@@ -67,94 +70,59 @@ const TodoList = ({ todos, onToggle, onUpdate, onDelete, emptyState }: TodoListP
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: 25px;
           padding-bottom: 15px;
-          border-bottom: 2px solid #e2e8f0;
-          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-          border-radius: 8px 8px 0 0;
-          padding: 15px 20px;
+          border-bottom: 1px solid var(--card-border);
         }
 
         .list-header h2 {
           margin: 0;
-          font-size: 1.6rem;
+          font-size: 24px;
           font-weight: 700;
-          color: #2d3748;
-          background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+          color: var(--text-primary);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
         .task-count {
-          background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
           color: white;
           padding: 6px 15px;
           border-radius: 20px;
           font-size: 0.95rem;
           font-weight: 600;
-          box-shadow: 0 2px 8px rgba(66, 153, 225, 0.2);
-        }
-
-        .empty-state {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 300px;
-          padding: 40px 20px;
-          background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
-          border-radius: 10px;
-          margin-top: 20px;
-        }
-
-        .empty-state-content {
-          text-align: center;
-          color: #4a5568;
-        }
-
-        .empty-state-icon {
-          font-size: 4rem;
-          margin-bottom: 20px;
-          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-        }
-
-        .empty-state h3 {
-          margin: 0 0 12px 0;
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #2d3748;
-        }
-
-        .empty-state p {
-          margin: 0;
-          font-size: 1rem;
-          color: #718096;
         }
 
         @media (max-width: 768px) {
           .list-header {
             flex-direction: column;
             gap: 12px;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start;
           }
 
           .task-count {
-            align-self: center;
+            align-self: flex-start;
           }
 
           .todo-list {
-            margin: 0 10px;
             padding: 20px 15px;
           }
+        }
 
-          .empty-state {
-            min-height: 250px;
-            padding: 30px 15px;
+        @media (max-width: 480px) {
+          .list-header {
+            gap: 10px;
           }
 
-          .empty-state h3 {
-            font-size: 1.3rem;
+          .list-header h2 {
+            font-size: 20px;
+          }
+
+          .task-count {
+            font-size: 0.9rem;
+            padding: 5px 12px;
           }
         }
       `}</style>

@@ -12,6 +12,10 @@ from .conversation_service import ConversationService
 from .ai_agent_service import AIAgentService
 from .context_builder import ContextBuilder
 from .ai_error_handler import ai_fallback_handler, AIServiceError
+from ..nlp.intent_parser import IntentParser
+from ..nlp.utils import parse_natural_language_command
+from ..models.task import TaskCreate
+from .task_service import TaskService
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +130,28 @@ class ChatService:
         """
         from ..config import settings
 
+        # Check if the last message contains a command for creating/updating tasks
+        if conversation_history:
+            last_message = conversation_history[-1]
+            user_input = last_message.content.lower()
+            
+            # Check if this looks like a task creation/update command
+            task_keywords = ['create task', 'add task', 'make task', 'set priority', 'add tag', 'due date', 'remind me', 'every', 'recurring']
+            if any(keyword in user_input for keyword in task_keywords):
+                # Parse the natural language command
+                try:
+                    task_create_obj = parse_natural_language_command(last_message.content)
+                    
+                    # Create the task using the task service
+                    task_service = TaskService()
+                    created_task = task_service.create_task(session, task_create_obj)
+                    
+                    # Return a confirmation message
+                    return f"I've created the task '{created_task.title}' with priority {created_task.priority}."
+                except Exception as e:
+                    logger.error(f"Error processing task command: {str(e)}")
+                    # If task processing fails, fall back to normal AI response
+        
         # Build context for the AI agent
         context_messages = ContextBuilder.build_context_from_conversation(
             session,
